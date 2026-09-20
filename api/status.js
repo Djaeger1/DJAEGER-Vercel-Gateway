@@ -1,0 +1,64 @@
+const TARGETS = [
+  ["djaeger_ai", "DJAEGER_AI_HEALTH_URL"],
+  ["djaeger_work", "DJAEGER_WORK_HEALTH_URL"]
+];
+
+async function probe(name, envKey) {
+  const url = process.env[envKey];
+  if (!url) {
+    return { name, configured: false, state: "NOT_CONFIGURED" };
+  }
+
+  const started = Date.now();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3500);
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      redirect: "follow",
+      signal: controller.signal,
+      headers: { "User-Agent": "DJAEGER-Vercel-Gateway/0.1.0" }
+    });
+
+    return {
+      name,
+      configured: true,
+      state: response.ok ? "ONLINE" : "DEGRADED",
+      http: response.status,
+      latency_ms: Date.now() - started
+    };
+  } catch (error) {
+    return {
+      name,
+      configured: true,
+      state: "OFFLINE",
+      latency_ms: Date.now() - started,
+      error: error?.name === "AbortError" ? "TIMEOUT" : "FETCH_FAILED"
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+
+  if (req.method !== "GET") {
+    res.setHeader("Allow", "GET");
+    return res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
+  }
+
+  const targets = await Promise.all(TARGETS.map(([name, key]) => probe(name, key)));
+  const configured = targets.filter((target) => target.configured);
+  const healthy = configured.length === 0 || configured.every((target) => target.state === "ONLINE");
+
+  return res.status(healthy ? 200 : 207).json({
+    ok: healthy,
+    service: "DJAEGER-Vercel-Gateway",
+    mode: "SHADOW",
+    version: "0.1.0",
+    timestamp: new Date().toISOString(),
+    targets
+  });
+}
