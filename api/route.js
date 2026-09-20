@@ -11,7 +11,7 @@ async function isOnline(url) {
       method: "GET",
       redirect: "follow",
       signal: controller.signal,
-      headers: { "User-Agent": "DJAEGER-Vercel-Gateway/0.2.0" }
+      headers: { "User-Agent": "DJAEGER-Vercel-Gateway/0.2.1" }
     });
 
     return {
@@ -46,8 +46,9 @@ export default async function handler(req, res) {
 
   const selfHosted = {
     control_plane: "GITHUB_DURABLE_CONTROL",
-    worker_branch: "vercel-fallback-shadow",
-    state: "PREPARED_DISABLED",
+    worker_branch: "main",
+    release: "v2.5.15-github-shadow-readonly",
+    state: "RELEASED_WAITING_DEVICE_CONVERGENCE",
     allowed_operation: "OBSERVE",
     device_writes_allowed: false
   };
@@ -58,7 +59,7 @@ export default async function handler(req, res) {
     ok: true,
     service: "DJAEGER-Vercel-Gateway",
     mode: "SHADOW",
-    version: "0.2.0",
+    version: "0.2.1",
     route,
     fallback_order: [
       "HERMES_RAILWAY",
@@ -71,8 +72,8 @@ export default async function handler(req, res) {
     work,
     self_hosted: selfHosted,
     note: ai.online
-      ? "Railway remains active. Self-hosted path is staged but disabled."
-      : "Railway is unavailable; gateway stays read-only until self-hosted cutover is explicitly enabled.",
+      ? "Railway remains active. Read-only self-hosted observer release is published and awaiting device convergence."
+      : "Railway is unavailable; gateway stays read-only. Self-hosted command failover is not enabled.",
     timestamp: new Date().toISOString()
   });
 }
