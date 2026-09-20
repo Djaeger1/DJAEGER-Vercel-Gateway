@@ -27,7 +27,8 @@ test("Railway online keeps HERMES_RAILWAY active", async () => {
     assert.equal(out.statusCode, 200);
     assert.equal(out.body.route, "HERMES_RAILWAY");
     assert.equal(out.body.commands_allowed, false);
-    assert.equal(out.body.self_hosted.state, "PREPARED_DISABLED");
+    assert.equal(out.body.self_hosted.state, "RELEASED_WAITING_DEVICE_CONVERGENCE");
+    assert.equal(out.body.self_hosted.release, "v2.5.15-github-shadow-readonly");
     assert.equal(out.body.self_hosted.device_writes_allowed, false);
   } finally {
     global.fetch = originalFetch;
@@ -44,7 +45,8 @@ test("Railway offline falls back safely without device commands", async () => {
     assert.equal(out.body.route, "VERCEL_SAFE_FALLBACK");
     assert.equal(out.body.commands_allowed, false);
     assert.equal(out.body.active_failover_policy, "RAILWAY_OR_SAFE_ONLY");
-    assert.equal(out.body.self_hosted.state, "PREPARED_DISABLED");
+    assert.equal(out.body.self_hosted.state, "RELEASED_WAITING_DEVICE_CONVERGENCE");
+    assert.equal(out.body.self_hosted.device_writes_allowed, false);
   } finally {
     global.fetch = originalFetch;
   }
