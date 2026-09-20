@@ -7,7 +7,7 @@ const TARGETS = [
   {
     name: "djaeger_work",
     envKey: "DJAEGER_WORK_HEALTH_URL",
-    fallbackUrl: null
+    fallbackUrl: "https://hermes-work-chatgpt-relay-v3-production.up.railway.app/health"
   }
 ];
 
@@ -27,7 +27,7 @@ async function probe({ name, envKey, fallbackUrl }) {
       method: "GET",
       redirect: "follow",
       signal: controller.signal,
-      headers: { "User-Agent": "DJAEGER-Vercel-Gateway/0.1.1" }
+      headers: { "User-Agent": "DJAEGER-Vercel-Gateway/0.1.2" }
     });
 
     return {
@@ -60,13 +60,13 @@ export default async function handler(req, res) {
 
   const targets = await Promise.all(TARGETS.map(probe));
   const configured = targets.filter((target) => target.configured);
-  const healthy = configured.length === 0 || configured.every((target) => target.state === "ONLINE");
+  const healthy = configured.length > 0 && configured.every((target) => target.state === "ONLINE");
 
   return res.status(healthy ? 200 : 207).json({
     ok: healthy,
     service: "DJAEGER-Vercel-Gateway",
     mode: "SHADOW",
-    version: "0.1.1",
+    version: "0.1.2",
     timestamp: new Date().toISOString(),
     targets
   });
