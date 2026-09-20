@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "generation": 1,
+  "mode": "SHADOW",
+  "command": "OBSERVE",
+  "allow_device_writes": false,
+  "target": "DJAEGER_WORK_SELF_HOSTED",
+  "source": "GITHUB_DURABLE_CONTROL",
+  "note": "Read-only shadow control. No device mutation is authorized."
+}
