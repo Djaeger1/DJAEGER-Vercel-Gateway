@@ -14,10 +14,12 @@ export default function handler(req, res) {
     desired_state_url:
       "https://raw.githubusercontent.com/Djaeger1/DJAEGER-Vercel-Gateway/main/control/desired.json",
     worker_repo: "Djaeger1/DJAEGER-WORK",
-    worker_branch: "vercel-fallback-shadow",
-    worker_activation: "DISABLED",
+    worker_branch: "main",
+    worker_release: "v2.5.15-github-shadow-readonly",
+    worker_activation: "RELEASED_WAITING_DEVICE_CONVERGENCE",
     allowed_operation: "OBSERVE",
     device_writes_allowed: false,
+    command_failover_enabled: false,
     production_cutover: false,
     timestamp: new Date().toISOString()
   });
