@@ -20,25 +20,37 @@ Returns gateway health and deployment metadata.
 
 ### `GET /api/status`
 
-Optionally checks configured DJAEGER endpoints.
+Checks DJAEGER AI and DJAEGER Work health endpoints.
 
-Environment variables:
+### `GET /api/route`
 
-- `DJAEGER_AI_HEALTH_URL`
-- `DJAEGER_WORK_HEALTH_URL`
+Returns the current shadow routing decision. Device commands remain disabled.
 
-If they are not configured, the target is reported as `NOT_CONFIGURED`.
+### `GET /api/control`
 
-## Initial architecture
+Describes the prepared self-hosted control path. It is not an activation endpoint.
+
+## Safety verification
+
+GitHub Actions runs Node's built-in test runner against the gateway routing and durable desired-state contract. The tests require:
+
+- Railway online => `HERMES_RAILWAY`.
+- Railway offline => `VERCEL_SAFE_FALLBACK`.
+- `commands_allowed=false` in all shadow cases.
+- self-hosted worker remains `PREPARED_DISABLED`.
+- durable desired state remains `SHADOW / OBSERVE / allow_device_writes=false`.
+
+## Architecture
 
 ```
 ChatGPT
    |
-GitHub
+GitHub durable control
    |
 Vercel Gateway (SHADOW)
-   |-- /api/health
-   '-- /api/status
+   |-- Railway DJAEGER AI health
+   |-- DJAEGER Work relay health
+   '-- Self-hosted path (prepared, disabled)
 ```
 
-Production control remains isolated until the shadow path is validated.
+Production control remains isolated until an explicit cutover.
