@@ -1,10 +1,19 @@
 const TARGETS = [
-  ["djaeger_ai", "DJAEGER_AI_HEALTH_URL"],
-  ["djaeger_work", "DJAEGER_WORK_HEALTH_URL"]
+  {
+    name: "djaeger_ai",
+    envKey: "DJAEGER_AI_HEALTH_URL",
+    fallbackUrl: "https://djaeger-ai-core-production-736f.up.railway.app/ready"
+  },
+  {
+    name: "djaeger_work",
+    envKey: "DJAEGER_WORK_HEALTH_URL",
+    fallbackUrl: null
+  }
 ];
 
-async function probe(name, envKey) {
-  const url = process.env[envKey];
+async function probe({ name, envKey, fallbackUrl }) {
+  const url = process.env[envKey] || fallbackUrl;
+
   if (!url) {
     return { name, configured: false, state: "NOT_CONFIGURED" };
   }
@@ -18,7 +27,7 @@ async function probe(name, envKey) {
       method: "GET",
       redirect: "follow",
       signal: controller.signal,
-      headers: { "User-Agent": "DJAEGER-Vercel-Gateway/0.1.0" }
+      headers: { "User-Agent": "DJAEGER-Vercel-Gateway/0.1.1" }
     });
 
     return {
@@ -49,7 +58,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ ok: false, error: "METHOD_NOT_ALLOWED" });
   }
 
-  const targets = await Promise.all(TARGETS.map(([name, key]) => probe(name, key)));
+  const targets = await Promise.all(TARGETS.map(probe));
   const configured = targets.filter((target) => target.configured);
   const healthy = configured.length === 0 || configured.every((target) => target.state === "ONLINE");
 
@@ -57,7 +66,7 @@ export default async function handler(req, res) {
     ok: healthy,
     service: "DJAEGER-Vercel-Gateway",
     mode: "SHADOW",
-    version: "0.1.0",
+    version: "0.1.1",
     timestamp: new Date().toISOString(),
     targets
   });
