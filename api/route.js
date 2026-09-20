@@ -11,7 +11,7 @@ async function isOnline(url) {
       method: "GET",
       redirect: "follow",
       signal: controller.signal,
-      headers: { "User-Agent": "DJAEGER-Vercel-Gateway/0.1.2" }
+      headers: { "User-Agent": "DJAEGER-Vercel-Gateway/0.2.0" }
     });
 
     return {
@@ -44,20 +44,35 @@ export default async function handler(req, res) {
     isOnline(process.env.DJAEGER_WORK_HEALTH_URL || WORK_READY)
   ]);
 
+  const selfHosted = {
+    control_plane: "GITHUB_DURABLE_CONTROL",
+    worker_branch: "vercel-fallback-shadow",
+    state: "PREPARED_DISABLED",
+    allowed_operation: "OBSERVE",
+    device_writes_allowed: false
+  };
+
   const route = ai.online ? "HERMES_RAILWAY" : "VERCEL_SAFE_FALLBACK";
 
   return res.status(200).json({
     ok: true,
     service: "DJAEGER-Vercel-Gateway",
     mode: "SHADOW",
-    version: "0.1.2",
+    version: "0.2.0",
     route,
+    fallback_order: [
+      "HERMES_RAILWAY",
+      "SELF_HOSTED_DJAEGER_WORK",
+      "VERCEL_SAFE_FALLBACK"
+    ],
+    active_failover_policy: "RAILWAY_OR_SAFE_ONLY",
     commands_allowed: false,
     ai,
     work,
-    note: route === "VERCEL_SAFE_FALLBACK"
-      ? "Control-plane fallback only; no device commands are issued."
-      : "Railway remains the active AI backend.",
+    self_hosted: selfHosted,
+    note: ai.online
+      ? "Railway remains active. Self-hosted path is staged but disabled."
+      : "Railway is unavailable; gateway stays read-only until self-hosted cutover is explicitly enabled.",
     timestamp: new Date().toISOString()
   });
 }
