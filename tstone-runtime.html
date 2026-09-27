@@ -1,0 +1,32 @@
+<!doctype html><meta charset="utf-8"><pre id=o>start</pre><script type="module">
+import{connect}from"https://esm.sh/frida-js";
+const o=document.getElementById("o");
+(async()=>{
+try{
+ const c=await connect({host:"127.0.0.1:27042"});
+ o.textContent+="\nfrida connected";
+ const ps=await c.enumerateProcesses();
+ const p=ps.find(x=>x.processName==="online.xdlands.game");
+ if(!p)throw Error("game pid not found");
+ o.textContent+="\npid="+p.pid;
+ const b=await(await fetch("https://cdn.jsdelivr.net/npm/frida-il2cpp-bridge@0.13.2/dist/index.js")).text();
+ const s=b+`
+Il2Cpp.perform(function(){
+ let out=[];
+ for(const a of Il2Cpp.domain.assemblies){
+  const img=a.image;
+  for(const cl of img.classes){
+   if(/wallet|inventory|currency/i.test(cl.name)){
+    out.push(a.name+"::"+cl.name);
+    for(const m of cl.methods)if(/balance|wallet|stone|currency|inventory|receive/i.test(m.name))out.push("M "+m.name);
+    for(const f of cl.fields)if(/wallet|balance|stone|currency|inventory/i.test(f.name))out.push("F "+f.name);
+   }
+  }
+ }
+ const f=new File("/sdcard/Download/djaeger_wallet_scan.txt","w");f.write(out.join("\\n"));f.flush();f.close();
+});`;
+ await c.injectIntoProcess(p.pid,s);
+ o.textContent+="\ninjected";
+}catch(e){o.textContent+="\nERR "+(e.stack||e)}
+})();
+</script>
